@@ -41,9 +41,6 @@ object HDFSReader  extends App {
       val newFile: FSDataOutputStream = createDirectoryAndFile(newPath)
       writeToFile(newFile, oldPath)
     })
-
-    val status2 = fileSystem.listStatus(odsPath)
-    status2.foreach(x => println(x.toString))
   }finally{
       fileSystem.close()
     }
