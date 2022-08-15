@@ -16,30 +16,39 @@ object HDFSReader  extends App {
 
   val status = fileSystem.listStatus(stagePath)
 
-  def createDirectoryAndFile(path: Path): FSDataOutputStream = fileSystem.create(path)
-
-  def writeToFile(newFile: FSDataOutputStream, oldPath: Path): Unit = {
+  def writeToFile(oldPath: Path): Unit = {
 
     val files: RemoteIterator[LocatedFileStatus] = fileSystem.listFiles(oldPath, true);
 
+    var needCreateNewFile = true
+    var newFile: FSDataOutputStream = null
+
     while (files.hasNext) {
-      val next: LocatedFileStatus = files.next();
+      val next: LocatedFileStatus = files.next()
       if (next.getPath.toString.endsWith(".csv")) {
+        if(needCreateNewFile){
+          val newPath = odsPath.suffix("/" + oldPath.getName + "/part-0000.csv")
+          newFile = fileSystem.create(newPath)
+          needCreateNewFile = false
+        }
         val openedFile: FSDataInputStream = fileSystem.open(next.getPath)
         newFile.write(openedFile.readAllBytes())
         openedFile.close()
         fileSystem.delete(next.getPath, false)
       }
     }
-    newFile.close()
+
+    if(newFile != null) {
+      newFile.close()
+    }
   }
 
   try {
     status.foreach(x => {
       val oldPath = x.getPath
-      val newPath = odsPath.suffix("/" + oldPath.getName + "/part-0000.csv")
-      val newFile: FSDataOutputStream = createDirectoryAndFile(newPath)
-      writeToFile(newFile, oldPath)
+      val newPathFolder = odsPath.suffix("/" + oldPath.getName)
+      fileSystem.mkdirs(newPathFolder)
+      writeToFile(oldPath)
     })
   }finally{
       fileSystem.close()
