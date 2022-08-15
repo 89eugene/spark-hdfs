@@ -37,7 +37,7 @@ object HDFSReader  extends App {
   try {
     status.foreach(x => {
       val oldPath = x.getPath
-      val newPath = odsPath.suffix("/" + oldPath.getName + "/part-0000")
+      val newPath = odsPath.suffix("/" + oldPath.getName + "/part-0000.csv")
       val newFile: FSDataOutputStream = createDirectoryAndFile(newPath)
       writeToFile(newFile, oldPath)
     })
